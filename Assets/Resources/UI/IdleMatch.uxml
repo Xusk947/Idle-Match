@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Resources/UI/stylesheet.uss?fileID=7433441132597879392&amp;guid=7b3e039cbe2bbf1499c436ac533f3c44&amp;type=3#stylesheet" />
+    <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
+        <ui:VisualElement name="Game" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); flex-direction: row; height: 80%;" />
+        <ui:VisualElement name="Container" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0.38); height: 25px; opacity: 1; -unity-background-scale-mode: stretch-to-fill; flex-wrap: nowrap; flex-direction: row; justify-content: center; align-self: auto;">
+            <ui:Button text="Upgrades" display-tooltip-when-elided="true" name="Upgrades" class="button" />
+            <ui:Button text="Gems" display-tooltip-when-elided="true" name="Gems" class="button" />
+            <ui:Button text="Shop" display-tooltip-when-elided="true" name="Shop" class="button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

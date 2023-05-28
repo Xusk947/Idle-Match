@@ -107,7 +107,19 @@ namespace IdleMatch.Game
                 Element.transform.LeanMove(from.transform.position, .5f).setEase(LeanTweenType.easeOutBack);
                 from.Element.transform.LeanMove(transform.position, .5f).setEase(LeanTweenType.easeOutBack).setOnComplete(() => {
                     (from.Element, Element) = (Element, from.Element);
-                    BoardController.Instance.CanSwap = true;
+                    bool matched = Match.TryMatchElements(from) || Match.TryMatchElements(this);
+
+                    if (!matched)
+                    {
+                        Element.transform.LeanMove(transform.position, .5f).setEase(LeanTweenType.easeInOutBack);
+                        from.Element.transform.LeanMove(from.transform.position, .5f).setEase(LeanTweenType.easeInOutBack).setOnComplete(() => {
+                            (from.Element, Element) = (Element, from.Element);
+                            BoardController.Instance.CanSwap = true;
+                        });
+                    } else
+                    {
+                        BoardController.Instance.CanSwap = true;
+                    }
                 });
             }
             else
@@ -121,13 +133,30 @@ namespace IdleMatch.Game
             }
         }
 
+        public void MatchDestroy()
+        {
+            Element.transform.LeanScale(Vector3.zero, .5f).setEase(LeanTweenType.easeOutBack).setOnComplete(() => {
+                Destroy(Element.gameObject);
+                Element = null;
+            });
+        }
+
         private void SetElement(GemElement element)
         {
-            if (element == null) return;
+            if (element == null)
+            {
+                GetCellNeighbor(0, 1)?.TryToPushElement();
+                return;
+            }
             element.transform.position = transform.position;
             element.transform.SetParent(transform);
 
-            // Push element to the bottom cell when it's empty
+            TryToPushElement();
+        }
+
+        private void TryToPushElement()
+        {
+            if (Element == null) return; 
             Cell cellBelow = GetCellNeighbor(0, -1);
             if (cellBelow == null || cellBelow.Element != null || !cellBelow.Unlocked) return;
             Element.transform.LeanMove(cellBelow.transform.position, .125f).setEase(LeanTweenType.easeOutBack).setOnComplete(() => {

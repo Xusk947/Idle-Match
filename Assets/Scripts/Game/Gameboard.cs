@@ -32,7 +32,7 @@ namespace IdleMatch.Game
         private List<Cell> _spawnerCells;
 
         private bool _needSpawnCellsElement;
-        private float _spawnDelay = 100f;
+        private float _spawnDelay = 5f;
         private float _spawnDelayTimer;
 
         private void Awake()
@@ -75,6 +75,7 @@ namespace IdleMatch.Game
 
         private void OnCellUnlock(object sender, Cell cell)
         {
+            cell.AbleToSpawnElement = true;
             Cell cellBelow = cell.GetCellNeighbor(0, -1);
             print(cell + " : " + cellBelow + " : " + cellBelow.Unlocked + " :"  + _spawnerCells.Contains(cellBelow));
             if (cellBelow != null && cellBelow.Unlocked && _spawnerCells.Contains(cellBelow))
@@ -96,7 +97,7 @@ namespace IdleMatch.Game
                 for (int i = 0; i < _spawnerCells.Count; i++)
                 {
                     Cell cell = _spawnerCells[i];
-                    if (cell.Element == null)
+                    if (cell.Element == null && cell.AbleToSpawnElement)
                     {
                         cell.SpawnElement();
                         yield return 0;

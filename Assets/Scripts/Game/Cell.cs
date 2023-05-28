@@ -38,6 +38,8 @@ namespace IdleMatch.Game
         /// </summary>
         public Chunk Chunk;
 
+        public bool AbleToSpawnElement;
+
         /// <summary>
         /// The x-coordinate of the cell within the chunk.
         /// </summary>
@@ -73,15 +75,23 @@ namespace IdleMatch.Game
         /// </summary>
         public void SpawnElement()
         {
+            AbleToSpawnElement = false;
+
             GameObject gameObject = new GameObject("Element");
             gameObject.transform.SetParent(transform);
-            gameObject.transform.position = transform.position;
+            gameObject.transform.position = transform.position + new Vector3(0, 1, 0);
+            GemElement element = gameObject.AddComponent<GemElement>();
 
-            Element = gameObject.AddComponent<GemElement>();
 
             int value = Random.Range(0, Gameboard.Instance.Sprites.Count);
-            Element.SpriteRenderer.sprite = Gameboard.Instance.Sprites[value];
-            Element.value = value; 
+            element.SpriteRenderer.sprite = Gameboard.Instance.Sprites[value];
+            element.value = value;
+            element.transform.localScale = new Vector3();
+            element.transform.LeanMove(transform.position, .25f).setEase(LeanTweenType.easeOutBack);
+            element.transform.LeanScale(new Vector3(.9f, .9f, .9f), .25f).setOnComplete(()=> {
+                Element = element;
+                AbleToSpawnElement = true;
+            });
         }
 
         public void SwapElement(Cell from)
@@ -113,8 +123,16 @@ namespace IdleMatch.Game
 
         private void SetElement(GemElement element)
         {
+            if (element == null) return;
             element.transform.position = transform.position;
             element.transform.SetParent(transform);
+
+            // Push element to the bottom cell when it's empty
+            Cell cellBelow = GetCellNeighbor(0, -1);
+            if (cellBelow == null || cellBelow.Element != null || !cellBelow.Unlocked) return;
+            Element.transform.LeanMove(cellBelow.transform.position, .125f).setEase(LeanTweenType.easeOutBack).setOnComplete(() => {
+                (Element, cellBelow.Element) = (null, Element);
+            });
         }
 
         /// <summary>

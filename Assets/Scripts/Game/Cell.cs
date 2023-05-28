@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -21,7 +23,15 @@ namespace IdleMatch.Game
         /// <summary>
         /// The element placed on the cell.
         /// </summary>
-        public GemElement Element { get; private set; }
+        public GemElement Element { get { return _element; }
+            private set
+            {
+                _element = value;
+                SetElement(value);
+            } 
+        }
+
+        private GemElement _element;
 
         /// <summary>
         /// The chunk that the cell belongs to.
@@ -56,6 +66,7 @@ namespace IdleMatch.Game
         {
             get { return new Vector2Int(Chunk.CHUNK_SIZE * Chunk.x + x, Chunk.CHUNK_SIZE * Chunk.y + y); }
         }
+        [SerializeField, ReadOnly(true)]
 
         /// <summary>
         /// Spawns an element on the cell.
@@ -70,7 +81,40 @@ namespace IdleMatch.Game
 
             int value = Random.Range(0, Gameboard.Instance.Sprites.Count);
             Element.SpriteRenderer.sprite = Gameboard.Instance.Sprites[value];
-            Element.value = value;
+            Element.value = value; 
+        }
+
+        public void SwapElement(Cell from)
+        {
+            if (Element == null)
+            {
+                BoardController.Instance.CanSwap = true;
+                return;
+            }
+
+            if (from.Element != null)
+            {
+                Element.transform.LeanMove(from.transform.position, .5f).setEase(LeanTweenType.easeOutBack);
+                from.Element.transform.LeanMove(transform.position, .5f).setEase(LeanTweenType.easeOutBack).setOnComplete(() => {
+                    (from.Element, Element) = (Element, from.Element);
+                    BoardController.Instance.CanSwap = true;
+                });
+            }
+            else
+            {
+                Element.transform.LeanMove(from.transform.position, .5f).setEase(LeanTweenType.easeOutBack).setOnComplete(() => {
+                    Element.transform.LeanMove(transform.position, .5f).setEase(LeanTweenType.easeInOutBack).setOnComplete(() =>
+                    {
+                        BoardController.Instance.CanSwap = true;
+                    });
+                });
+            }
+        }
+
+        private void SetElement(GemElement element)
+        {
+            element.transform.position = transform.position;
+            element.transform.SetParent(transform);
         }
 
         /// <summary>
@@ -92,6 +136,15 @@ namespace IdleMatch.Game
         public Cell GetCellNeighbor(int x, int y)
         {
             return Gameboard.Instance.GetCell(globalX + x, globalY + y);
+        }
+        /// <summary>
+        /// Retrieves the neighboring cell at the specified offset.
+        /// </summary>
+        /// <param name="direction">X/Y offset from the current cell.</param>
+        /// <returns>The neighboring cell, or null if out of bounds.</returns>
+        public Cell GetCellNeighbor(Vector2Int direction)
+        {
+            return Gameboard.Instance.GetCell(globalX + direction.x, globalY + direction.y);
         }
 
         private void Awake()

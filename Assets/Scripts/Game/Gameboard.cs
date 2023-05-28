@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace IdleMatch.Game
 {
@@ -31,6 +32,8 @@ namespace IdleMatch.Game
         private List<Cell> _spawnerCells;
 
         private bool _needSpawnCellsElement;
+        private float _spawnDelay = 100f;
+        private float _spawnDelayTimer;
 
         private void Awake()
         {
@@ -49,6 +52,21 @@ namespace IdleMatch.Game
 
         private void Update()
         {
+            _spawnDelayTimer -= Time.deltaTime * 60f;
+            if (_spawnDelayTimer < 0)
+            {
+                print(_spawnerCells.Count);
+                _spawnDelayTimer = _spawnDelay;
+                for (int i =0; i < _spawnerCells.Count; i++) 
+                {
+                    Cell activeCell = _spawnerCells[i];
+                    if (activeCell.Element == null)
+                    {
+                        _needSpawnCellsElement = true;
+                    }
+                }
+            }
+
             if (_needSpawnCellsElement)
             {
                 StartCoroutine(TryToFillBoard());
@@ -57,16 +75,14 @@ namespace IdleMatch.Game
 
         private void OnCellUnlock(object sender, Cell cell)
         {
-            _spawnerCells.Add(cell);
-            for (int i = 0; i < _spawnerCells.Count; i++)
+            Cell cellBelow = cell.GetCellNeighbor(0, -1);
+            print(cell + " : " + cellBelow + " : " + cellBelow.Unlocked + " :"  + _spawnerCells.Contains(cellBelow));
+            if (cellBelow != null && cellBelow.Unlocked && _spawnerCells.Contains(cellBelow))
             {
-                Cell activeCell = _spawnerCells[i];
-                if (activeCell.GetCellNeighbor(0, 1).Unlocked)
-                {
-                    _spawnerCells.Remove(activeCell);
-                }
-            }
-            _needSpawnCellsElement = true;
+                _spawnerCells.Remove(cellBelow);
+            } 
+            _spawnerCells.Add(cell);
+            _spawnDelayTimer = _spawnDelay;
         }
 
         /// <summary>
@@ -80,7 +96,6 @@ namespace IdleMatch.Game
                 for (int i = 0; i < _spawnerCells.Count; i++)
                 {
                     Cell cell = _spawnerCells[i];
-                    print(cell);
                     if (cell.Element == null)
                     {
                         cell.SpawnElement();
@@ -93,16 +108,6 @@ namespace IdleMatch.Game
             yield return 0;
         }
 
-        /// <summary>
-        /// Converts world position to tile position.
-        /// </summary>
-        /// <param name="x">X coordinate of the world position.</param>
-        /// <param name="y">Y coordinate of the world position.</param>
-        /// <returns>The tile position as a Vector2Int.</returns>
-        public Vector2Int WorldToTilePosition(float x, float y)
-        {
-            return new Vector2Int(Mathf.CeilToInt(x + .5f), Mathf.CeilToInt(y + .5f));
-        }
 
         /// <summary>
         /// Retrieves the cell at the specified coordinates.
@@ -152,6 +157,8 @@ namespace IdleMatch.Game
                 for (int y = 0; y < chunk_size; y++)
                 {
                     Chunk chunk = new GameObject($"Chunk({x}:{y})").AddComponent<Chunk>();
+                    chunk.x = x;
+                    chunk.y = y;
                     chunk.transform.SetParent(transform);
                     chunk.transform.position = new Vector2(x * Chunk.CHUNK_SIZE, y * Chunk.CHUNK_SIZE);
                     chunk.FillCells();
@@ -159,6 +166,21 @@ namespace IdleMatch.Game
                     _chunks[x, y] = chunk;
                 }
             }
+        }
+        /// <summary>
+        /// Converts world position to tile position.
+        /// </summary>
+        /// <param name="x">X coordinate of the world position.</param>
+        /// <param name="y">Y coordinate of the world position.</param>
+        /// <returns>The tile position as a Vector2Int.</returns>
+        public static Vector2Int WorldToTilePosition(float x, float y)
+        {
+            return new Vector2Int(Mathf.CeilToInt(x + .5f), Mathf.CeilToInt(y + .5f));
+        }
+
+        public static Vector2Int WorldToTilePosition(Vector2 position)
+        {
+            return new Vector2Int(Mathf.CeilToInt(position.x + .5f), Mathf.CeilToInt(position.y + .5f));
         }
     }
 }

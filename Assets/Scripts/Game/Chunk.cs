@@ -57,9 +57,10 @@ namespace IdleMatch.Game
         /// </summary>
         /// <param name="x">The x-coordinate of the cell within the chunk.</param>
         /// <param name="y">The y-coordinate of the cell within the chunk.</param>
-        /// <returns>The cell at the specified coordinates.</returns>
+        /// <returns>The cell at the specified coordinates. Null if out of bounds</returns>
         public Cell GetCell(int x, int y)
         {
+            if (x < 0 || y < 0 || x >= CHUNK_SIZE || y >= CHUNK_SIZE) return null;
             return cells[x, y];
         }
 
